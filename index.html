@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroSense RoboAssist | SPARKERS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        :root {
+            --primary: #0ff0fc;
+            --secondary: #9d4edd;
+            --accent: #f72585;
+            --dark: #0a0a1a;
+            --darker: #050510;
+            --light: #f8f9fa;
+            --glass: rgba(255, 255, 255, 0.05);
+            --neon-glow: 0 0 10px rgba(15, 240, 252, 0.7);
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(157, 78, 221, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(15, 240, 252, 0.1) 0%, transparent 20%);
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+            perspective: 1200px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 3D Slides Container */
+        .slides-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        .slide {
+            position: absolute;
+            width: 85%;
+            height: 85%;
+            top: 7.5%;
+            left: 7.5%;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(145deg, rgba(10, 10, 26, 0.95), rgba(5, 5, 16, 0.98));
+            border-radius: 20px;
+            box-shadow: 
+                0 0 50px rgba(15, 240, 252, 0.3),
+                inset 0 0 100px rgba(157, 78, 221, 0.1);
+            border: 1px solid rgba(15, 240, 252, 0.2);
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+            opacity: 0.3;
+            transition: all 1.2s cubic-bezier(0.77, 0, 0.175, 1);
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: translateZ(0px) scale(1);
+            z-index: 10;
+            box-shadow: 
+                0 0 80px rgba(15, 240, 252, 0.5),
+                inset 0 0 150px rgba(157, 78, 221, 0.2);
+        }
+
+        .slide.prev {
+            transform: translateZ(-400px) translateX(-60%) rotateY(10deg) scale(0.8);
+            opacity: 0.4;
+        }
+
+        .slide.next {
+            transform: translateZ(-400px) translateX(60%) rotateY(-10deg) scale(0.8);
+            opacity: 0.4;
+        }
+
+        .slide.far-left {
+            transform: translateZ(-800px) translateX(-100%) rotateY(20deg) scale(0.6);
+            opacity: 0.2;
+        }
+
+        .slide.far-right {
+            transform: translateZ(-800px) translateX(100%) rotateY(-20deg) scale(0.6);
+            opacity: 0.2;
+        }
+
+        /* Navigation */
+        .nav-dots {
+            position: fixed;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%) translateZ(50px);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .nav-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.5s;
+            position: relative;
+            transform-style: preserve-3d;
+            transform: translateZ(0);
+        }
+
+        .nav-dot.active {
+            background-color: var(--primary);
+            box-shadow: 
+                0 0 15px var(--primary),
+                inset 0 0 10px rgba(255, 255, 255, 0.5);
+            transform: translateZ(20px) scale(1.3);
+        }
+
+        .nav-dot:hover {
+            transform: translateZ(30px) scale(1.5);
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        .nav-dot:hover::after {
+            content: attr(data-title);
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%) translateZ(30px);
+            background-color: rgba(10, 10, 26, 0.95);
+            color: var(--primary);
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            white-space: nowrap;
+            border: 1px solid var(--primary);
+            box-shadow: 0 0 15px rgba(15, 240, 252, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-arrows {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(50px);
+            display: flex;
+            gap: 30px;
+            z-index: 1000;
+        }
+
+        .nav-arrow {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, rgba(15, 240, 252, 0.1), rgba(157, 78, 221, 0.1));
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.5s;
+            font-size: 24px;
+            transform-style: preserve-3d;
+            transform: translateZ(0);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-arrow:hover {
+            background: linear-gradient(145deg, rgba(15, 240, 252, 0.3), rgba(157, 78, 221, 0.3));
+            box-shadow: 
+                0 0 30px var(--primary),
+                inset 0 0 20px rgba(255, 255, 255, 0.2);
+            transform: translateZ(30px) scale(1.1);
+        }
+
+        /* Futuristic slide styles */
+        .slide-title {
+            font-size: 3.5rem;
+            margin-bottom: 30px;
+            text-align: center;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 30px rgba(157, 78, 221, 0.7);
+            letter-spacing: 2px;
+            transform: translateZ(50px);
+        }
+
+        .slide-subtitle {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 300;
+            letter-spacing: 1px;
+            transform: translateZ(40px);
+        }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 100%;
+            padding: 30px;
+            background: var(--glass);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            transform: translateZ(30px);
+        }
+
+        .slide-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        .glass-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.5s;
+            transform: translateZ(0);
+        }
+
+        .glass-card:hover {
+            border-color: var(--primary);
+            box-shadow: 
+                0 10px 30px rgba(15, 240, 252, 0.3),
+                inset 0 0 30px rgba(15, 240, 252, 0.1);
+            transform: translateZ(20px) translateY(-5px);
+        }
+
+        /* 3D Floating elements */
+        .floating-element {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary), transparent 70%);
+            opacity: 0.3;
+            filter: blur(30px);
+            z-index: -1;
+            transform-style: preserve-3d;
+        }
+
+        .circuit-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            height: 1px;
+            opacity: 0.2;
+            z-index: -1;
+            transform-style: preserve-3d;
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            z-index: 1000;
+            transition: width 0.5s;
+            box-shadow: 0 0 20px var(--primary);
+        }
+
+        /* Slide counter */
+        .slide-counter {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            font-size: 1.2rem;
+            color: var(--primary);
+            z-index: 1000;
+            background: rgba(10, 10, 26, 0.7);
+            padding: 8px 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(15, 240, 252, 0.3);
+            backdrop-filter: blur(10px);
+            transform: translateZ(50px);
+        }
+
+        /* Enhanced team cards */
+        .team-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .team-member {
+            width: 220px;
+            text-align: center;
+            padding: 25px;
+            background: linear-gradient(145deg, rgba(15, 240, 252, 0.1), rgba(157, 78, 221, 0.1));
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.5s;
+            transform: translateZ(0);
+            backdrop-filter: blur(10px);
+        }
+
+        .team-member:hover {
+            transform: translateZ(40px) translateY(-10px);
+            border-color: var(--primary);
+            box-shadow: 
+                0 20px 40px rgba(15, 240, 252, 0.3),
+                inset 0 0 40px rgba(15, 240, 252, 0.1);
+        }
+
+        .member-name {
+            font-size: 1.4rem;
+            color: var(--primary);
+            margin-top: 15px;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(15, 240, 252, 0.5);
+        }
+
+        /* Architecture diagram with 3D */
+        .arch-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+            perspective: 1000px;
+        }
+
+        .arch-level {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .arch-node {
+            padding: 20px 35px;
+            background: linear-gradient(145deg, rgba(15, 240, 252, 0.1), rgba(157, 78, 221, 0.1));
+            border-radius: 15px;
+            border: 2px solid var(--primary);
+            margin: 0 15px;
+            position: relative;
+            text-align: center;
+            min-width: 200px;
+            transform: translateZ(0);
+            transition: all 0.5s;
+            backdrop-filter: blur(10px);
+        }
+
+        .arch-node:hover {
+            transform: translateZ(30px);
+            box-shadow: 
+                0 10px 30px rgba(15, 240, 252, 0.4),
+                inset 0 0 30px rgba(15, 240, 252, 0.1);
+        }
+
+        .arch-node::after {
+            content: '↓';
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(10px);
+            color: var(--primary);
+            font-size: 30px;
+            text-shadow: 0 0 15px var(--primary);
+        }
+
+        .arch-level:last-child .arch-node::after {
+            display: none;
+        }
+
+        /* Roadmap with 3D */
+        .roadmap-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .roadmap-container::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            box-shadow: 0 0 20px var(--primary);
+            transform: translateZ(-10px);
+        }
+
+        .roadmap-phase {
+            width: 30%;
+            position: relative;
+            padding-top: 50px;
+            transform-style: preserve-3d;
+        }
+
+        .phase-dot {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateZ(20px);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--darker);
+            border: 3px solid var(--primary);
+            z-index: 2;
+            box-shadow: 0 0 20px var(--primary);
+            transition: all 0.5s;
+        }
+
+        .phase-dot:hover {
+            transform: translateX(-50%) translateZ(50px) scale(1.3);
+            box-shadow: 0 0 40px var(--primary);
+        }
+
+        /* 3D Grid for apps */
+        .apps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+            perspective: 1000px;
+        }
+
+        .app-card {
+            padding: 25px;
+            border-radius: 15px;
+            background: linear-gradient(145deg, rgba(15, 240, 252, 0.05), rgba(157, 78, 221, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.5s;
+            transform: translateZ(0);
+            backdrop-filter: blur(10px);
+        }
+
+        .app-card:hover {
+            border-color: var(--primary);
+            box-shadow: 
+                0 15px 40px rgba(15, 240, 252, 0.3),
+                inset 0 0 40px rgba(15, 240, 252, 0.1);
+            transform: translateZ(40px) translateY(-10px);
+        }
+
+        .app-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px var(--primary);
+            transform: translateZ(20px);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .slide {
+                width: 90%;
+                height: 90%;
+                top: 5%;
+                left: 5%;
+            }
+            
+            .slide-title {
+                font-size: 2.8rem;
+            }
+            
+            .roadmap-container {
+                flex-direction: column;
+                gap: 40px;
+            }
+            
+            .roadmap-phase {
+                width: 100%;
+            }
+            
+            .roadmap-container::before {
+                height: 100%;
+                width: 4px;
+                left: 30px;
+                top: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .slide-title {
+                font-size: 2.2rem;
+            }
+            
+            .slide-subtitle {
+                font-size: 1.4rem;
+            }
+            
+            .nav-dots {
+                right: 15px;
+            }
+            
+            .nav-arrow {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            
+            .team-member {
+                width: 180px;
+            }
+            
+            .arch-node {
+                min-width: 160px;
+                padding: 15px 20px;
+            }
+            
+            .slide.prev {
+                transform: translateZ(-300px) translateX(-80%) rotateY(15deg) scale(0.7);
+            }
+            
+            .slide.next {
+                transform: translateZ(-300px) translateX(80%) rotateY(-15deg) scale(0.7);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Slide counter -->
+    <div class="slide-counter" id="slideCounter">Slide 1 of 8</div>
+
+    <!-- 3D Slides container -->
+    <div class="container">
+        <div class="slides-container" id="slidesContainer">
+            <!-- Slide 1: Title -->
+            <div class="slide active" id="slide1">
+                <div class="circuit-line" id="circuit1"></div>
+                <div class="circuit-line" id="circuit2"></div>
+                <h1 class="slide-title">NeuroSense RoboAssist</h1>
+                <h2 class="slide-subtitle">Human-Centric Neural Touch-Based Intelligent Robotic System</h2>
+                
+                <div class="slide-content" style="max-width: 800px;">
+                    <div class="glass-card" style="text-align: center;">
+                        <h3 style="color: var(--primary); margin-bottom: 15px; font-size: 1.5rem; transform: translateZ(30px);">Exploring Neural Touch Communication and Emotion-Aware Robotics</h3>
+                        <p style="line-height: 1.6; font-size: 1.1rem; transform: translateZ(20px);">
+                            Transforming human–machine interaction from verbal communication to emotional, neural, and tactile intelligence, 
+                            enabling machines to perceive, adapt, and respond like humans.
+                        </p>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 30px; transform: translateZ(30px);">
+                        <h3 style="color: var(--secondary); font-size: 1.8rem;">Team <span style="color: var(--primary); text-shadow: 0 0 20px var(--primary);">SPARKERS</span></h3>
+                    </div>
+                </div>
+                
+                <div style="position: absolute; bottom: 40px; color: #aaa; font-size: 0.9rem; transform: translateZ(30px);">
+                    <i class="fas fa-chevron-down" style="margin-right: 10px; color: var(--primary);"></i> Use arrows, keys, or swipe to navigate
+                </div>
+            </div>
+
+            <!-- Slide 2: Team Introduction -->
+            <div class="slide" id="slide2">
+                <h2 class="slide-title">Team SPARKERS</h2>
+                <p class="slide-subtitle">The Minds Behind The Innovation</p>
+                
+                <div class="slide-content">
+                    <div class="team-container">
+                        <div class="team-member">
+                            <div style="width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(145deg, var(--primary), var(--secondary)); margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; transform: translateZ(20px); box-shadow: 0 0 30px var(--primary);">
+                                AG
+                            </div>
+                            <h4 class="member-name">ARUL GNANAKUMAR</h4>
+                            <p class="member-role">3D Web Designer & RAG Developer</p>
+                        </div>
+                        
+                        <div class="team-member">
+                            <div style="width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(145deg, var(--secondary), var(--accent)); margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; transform: translateZ(20px); box-shadow: 0 0 30px var(--secondary);">
+                                RK
+                            </div>
+                            <h4 class="member-name">RADHA KRISHINA</h4>
+                            <p class="member-role">Full Stack Developer</p>
+                        </div>
+                        
+                        <div class="team-member">
+                            <div style="width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(145deg, var(--accent), var(--primary)); margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; transform: translateZ(20px); box-shadow: 0 0 30px var(--accent);">
+                                A
+                            </div>
+                            <h4 class="member-name">AKASH</h4>
+                            <p class="member-role">Full Stack Developer</p>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card" style="margin-top: 30px;">
+                        <h3 style="color: var(--primary); margin-bottom: 10px; transform: translateZ(20px);">Team Vision</h3>
+                        <p style="line-height: 1.6; transform: translateZ(10px);">
+                            We are passionate innovators combining expertise in 3D design, full-stack development, and AI integration 
+                            to create groundbreaking human-machine interaction systems that bridge the gap between technology and empathy.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Problem Statement -->
+            <div class="slide" id="slide3">
+                <h2 class="slide-title">Problem Statement</h2>
+                <p class="slide-subtitle">The Current Gap in Human-Machine Interaction</p>
+                
+                <div class="slide-content">
+                    <div class="glass-card">
+                        <h3 style="color: var(--accent); margin-bottom: 15px; transform: translateZ(20px);"><i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i> The Challenge</h3>
+                        <p style="line-height: 1.6; margin-bottom: 15px; transform: translateZ(10px);">
+                            Current human-machine interaction systems rely primarily on verbal commands or pre-programmed responses, 
+                            lacking the ability to understand human emotional states, stress levels, and unspoken needs.
+                        </p>
+                        <p style="line-height: 1.6; transform: translateZ(10px);">
+                            This creates a significant gap in applications where empathy, adaptability, and real-time emotional awareness 
+                            are crucial - such as healthcare, industrial safety, and assistive robotics.
+                        </p>
+                    </div>
+                    
+                    <div class="apps-grid">
+                        <div class="app-card">
+                            <div class="app-icon">
+                                <i class="fas fa-industry"></i>
+                            </div>
+                            <h4>Industrial Limitations</h4>
+                            <p>Robots cannot detect worker stress or fatigue, leading to safety risks in collaborative environments.</p>
+                        </div>
+                        
+                        <div class="app-card">
+                            <div class="app-icon">
+                                <i class="fas fa-hospital-user"></i>
+                            </div>
+                            <h4>Healthcare Gaps</h4>
+                            <p>Medical assistive devices lack emotional intelligence to respond to patient anxiety or discomfort.</p>
+                        </div>
+                        
+                        <div class="app-card">
+                            <div class="app-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <h4>Robotic Empathy Deficit</h4>
+                            <p>Robots operate on pre-programmed logic without adaptive response to human emotional states.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Neural Touch Communication Concept -->
+            <div class="slide" id="slide4">
+                <h2 class="slide-title">Neural Touch Communication</h2>
+                <p class="slide-subtitle">Bridging Human Emotion and Machine Intelligence</p>
+                
+                <div class="slide-content">
+                    <div class="glass-card">
+                        <h3 style="color: var(--primary); margin-bottom: 15px; transform: translateZ(20px);"><i class="fas fa-brain" style="margin-right: 10px;"></i> Concept Definition</h3>
+                        <p style="line-height: 1.6; margin-bottom: 15px; transform: translateZ(10px);">
+                            Neural Touch Communication is a futuristic technology that enables machines to interpret human physiological 
+                            signals such as heart rate, touch patterns, and emotional states through biosensors, AI decision systems, 
+                            and haptic feedback.
+                        </p>
+                        <p style="line-height: 1.6; transform: translateZ(10px);">
+                            This technology bridges the gap between human emotions and machine intelligence, creating empathetic 
+                            and adaptive systems for industrial and medical applications.
+                        </p>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; margin-top: 20px;">
+                        <div class="app-card">
+                            <h4 style="color: var(--primary); margin-bottom: 10px; transform: translateZ(20px);">Key Components</h4>
+                            <ul style="padding-left: 20px; line-height: 1.6; transform: translateZ(10px);">
+                                <li>Biosensors for physiological signal capture</li>
+                                <li>AI-powered emotional state interpretation</li>
+                                <li>Haptic feedback systems</li>
+                                <li>Adaptive response algorithms</li>
+                                <li>Real-time neural signal processing</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="app-card">
+                            <h4 style="color: var(--secondary); margin-bottom: 10px; transform: translateZ(20px);">How It Works</h4>
+                            <ul style="padding-left: 20px; line-height: 1.6; transform: translateZ(10px);">
+                                <li>Detects human touch patterns and pressure</li>
+                                <li>Monitors heart rate and stress indicators</li>
+                                <li>Analyzes emotional state via AI algorithms</li>
+                                <li>Generates appropriate robotic responses</li>
+                                <li>Provides haptic and visual feedback</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: System Architecture -->
+            <div class="slide" id="slide5">
+                <h2 class="slide-title">System Architecture</h2>
+                <p class="slide-subtitle">Integrated Hardware-Software Ecosystem</p>
+                
+                <div class="slide-content">
+                    <div class="arch-container">
+                        <div class="arch-level">
+                            <div class="arch-node">
+                                <h4>INPUTS</h4>
+                                <p>Pulse Sensor</p>
+                                <p>Touch Sensor</p>
+                                <p>Neural Signals</p>
+                            </div>
+                        </div>
+                        
+                        <div class="arch-level">
+                            <div class="arch-node">
+                                <h4>PROCESSING</h4>
+                                <p>ESP32 Microcontroller</p>
+                                <p>Stress Detection Algorithm</p>
+                                <p>AI Decision Engine</p>
+                            </div>
+                        </div>
+                        
+                        <div class="arch-level">
+                            <div class="arch-node">
+                                <h4>OUTPUTS</h4>
+                                <p>Robotic Arm Control</p>
+                                <p>LED Visual Indicators</p>
+                                <p>Haptic Feedback</p>
+                                <p>Real-Time Dashboard</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card" style="margin-top: 40px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                            <div>
+                                <h4 style="color: var(--primary); margin-bottom: 10px; transform: translateZ(20px);">Hardware</h4>
+                                <ul style="padding-left: 20px; font-size: 0.95rem; transform: translateZ(10px);">
+                                    <li>ESP32-based robotic arm</li>
+                                    <li>Pulse sensor integration</li>
+                                    <li>Touch sensor integration</li>
+                                    <li>Servo motor control</li>
+                                    <li>LED & vibration feedback</li>
+                                </ul>
+                            </div>
+                            
+                            <div>
+                                <h4 style="color: var(--secondary); margin-bottom: 10px; transform: translateZ(20px);">Software</h4>
+                                <ul style="padding-left: 20px; font-size: 0.95rem; transform: translateZ(10px);">
+                                    <li>Stress detection logic</li>
+                                    <li>Control algorithms</li>
+                                    <li>Dashboard visualization</li>
+                                    <li>Digital twin simulation</li>
+                                    <li>Rule-based AI logic</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: Future Development Roadmap -->
+            <div class="slide" id="slide6">
+                <h2 class="slide-title">Development Roadmap</h2>
+                <p class="slide-subtitle">From Prototype to Future Vision</p>
+                
+                <div class="slide-content">
+                    <div class="roadmap-container">
+                        <div class="roadmap-phase">
+                            <div class="phase-dot"></div>
+                            <h3 style="color: var(--primary); margin-bottom: 15px; transform: translateZ(20px);">Short-Term</h3>
+                            <div class="glass-card">
+                                <ul style="padding-left: 20px; line-height: 1.6; font-size: 0.95rem; transform: translateZ(10px);">
+                                    <li>Real neural signal integration (EEG/EMG/GSR)</li>
+                                    <li>ML-based emotion classification</li>
+                                    <li>Mobile application integration</li>
+                                    <li>Cloud-based data analytics</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="roadmap-phase">
+                            <div class="phase-dot"></div>
+                            <h3 style="color: var(--secondary); margin-bottom: 15px; transform: translateZ(20px);">Mid-Term</h3>
+                            <div class="glass-card">
+                                <ul style="padding-left: 20px; line-height: 1.6; font-size: 0.95rem; transform: translateZ(10px);">
+                                    <li>Autonomous robotic decision-making</li>
+                                    <li>Reinforcement learning adaptation</li>
+                                    <li>Multi-sensor fusion</li>
+                                    <li>Smart wheelchair integration</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="roadmap-phase">
+                            <div class="phase-dot"></div>
+                            <h3 style="color: var(--accent); margin-bottom: 15px; transform: translateZ(20px);">Long-Term</h3>
+                            <div class="glass-card">
+                                <ul style="padding-left: 20px; line-height: 1.6; font-size: 0.95rem; transform: translateZ(10px);">
+                                    <li>Full Neural Touch Interface</li>
+                                    <li>Brain-Computer Interaction (BCI)</li>
+                                    <li>AI-driven empathetic robots</li>
+                                    <li>AR/VR and Metaverse integration</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 7: Applications & Impact -->
+            <div class="slide" id="slide7">
+                <h2 class="slide-title">Applications & Impact</h2>
+                <p class="slide-subtitle">Transforming Industries and Healthcare</p>
+                
+                <div class="slide-content">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
+                        <div>
+                            <h3 style="color: var(--primary); margin-bottom: 15px; transform: translateZ(20px);"><i class="fas fa-industry" style="margin-right: 10px;"></i> Industrial Applications</h3>
+                            <div class="glass-card">
+                                <ul style="padding-left: 20px; line-height: 1.6; transform: translateZ(10px);">
+                                    <li>Smart manufacturing robotics</li>
+                                    <li>Human-robot collaboration systems</li>
+                                    <li>Safety-aware industrial automation</li>
+                                    <li>Adaptive robotic arms in factories</li>
+                                    <li>Worker stress monitoring systems</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 style="color: var(--secondary); margin-bottom: 15px; transform: translateZ(20px);"><i class="fas fa-hospital" style="margin-right: 10px;"></i> Medical Applications</h3>
+                            <div class="glass-card">
+                                <ul style="padding-left: 20px; line-height: 1.6; transform: translateZ(10px);">
+                                    <li>Assistive robotic systems for patients</li>
+                                    <li>Smart wheelchairs</li>
+                                    <li>Neuro-rehabilitation devices</li>
+                                    <li>Mental health monitoring systems</li>
+                                    <li>Emotion-aware medical robots</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card" style="margin-top: 30px;">
+                        <h3 style="color: var(--accent); margin-bottom: 15px; transform: translateZ(20px);">Real-World Impact</h3>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+                            <div class="app-card" style="margin-bottom: 0; padding: 15px;">
+                                <h4 style="color: var(--primary);">Safety Enhancement</h4>
+                                <p>Reduces accidents in industrial environments through emotional awareness.</p>
+                            </div>
+                            <div class="app-card" style="margin-bottom: 0; padding: 15px;">
+                                <h4 style="color: var(--secondary);">Healthcare Support</h4>
+                                <p>Improves patient care with emotionally intelligent assistive devices.</p>
+                            </div>
+                            <div class="app-card" style="margin-bottom: 0; padding: 15px;">
+                                <h4 style="color: var(--accent);">Human-Machine Empathy</h4>
+                                <p>Bridges the emotional gap between humans and machines.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 8: Conclusion -->
+            <div class="slide" id="slide8">
+                <h2 class="slide-title">Vision & Conclusion</h2>
+                <p class="slide-subtitle">The Future of Human-Machine Symbiosis</p>
+                
+                <div class="slide-content">
+                    <div class="glass-card">
+                        <h3 style="color: var(--primary); margin-bottom: 15px; transform: translateZ(30px);">Our Vision</h3>
+                        <p style="line-height: 1.6; margin-bottom: 15px; font-size: 1.1rem; transform: translateZ(20px);">
+                            To create a world where machines don't just obey commands, but understand human emotions, 
+                            anticipate needs, and respond with empathy and intelligence - transforming how we work, 
+                            heal, and interact with technology.
+                        </p>
+                        
+                        <div style="display: flex; justify-content: center; margin-top: 30px;">
+                            <div style="text-align: center; padding: 25px; border-radius: 20px; background: linear-gradient(145deg, rgba(15, 240, 252, 0.15), rgba(157, 78, 221, 0.15)); border: 2px solid var(--primary); max-width: 600px; transform: translateZ(30px); box-shadow: 0 0 50px rgba(15, 240, 252, 0.3);">
+                                <h3 style="color: var(--primary); margin-bottom: 10px; text-shadow: 0 0 20px var(--primary);">SPARKERS</h3>
+                                <p style="transform: translateZ(20px);">ARUL GNANAKUMAR | RADHA KRISHINA | AKASH</p>
+                                <p style="margin-top: 15px; color: #aaa; transform: translateZ(20px);">NeuroSense RoboAssist Project</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 30px; transform: translateZ(30px);">
+                        <h3 style="color: var(--secondary); margin-bottom: 20px; text-shadow: 0 0 20px var(--secondary);">Thank You</h3>
+                        <p>For your time and consideration in exploring the future of human-AI interaction</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation dots -->
+        <div class="nav-dots" id="navDots">
+            <div class="nav-dot active" data-title="Title" data-slide="0"></div>
+            <div class="nav-dot" data-title="Team" data-slide="1"></div>
+            <div class="nav-dot" data-title="Problem" data-slide="2"></div>
+            <div class="nav-dot" data-title="Concept" data-slide="3"></div>
+            <div class="nav-dot" data-title="Architecture" data-slide="4"></div>
+            <div class="nav-dot" data-title="Roadmap" data-slide="5"></div>
+            <div class="nav-dot" data-title="Applications" data-slide="6"></div>
+            <div class="nav-dot" data-title="Conclusion" data-slide="7"></div>
+        </div>
+        
+        <!-- Navigation arrows -->
+        <div class="nav-arrows">
+            <div class="nav-arrow" id="prevBtn">
+                <i class="fas fa-chevron-left"></i>
+            </div>
+            <div class="nav-arrow" id="nextBtn">
+                <i class="fas fa-chevron-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Presentation state
+        let currentSlide = 0;
+        const totalSlides = 8;
+        const slidesContainer = document.getElementById('slidesContainer');
+        const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.nav-dot');
+        const progressBar = document.getElementById('progressBar');
+        const slideCounter = document.getElementById('slideCounter');
+        let isAnimating = false;
+        
+        // Initialize 3D effects
+        function init3DEffects() {
+            // Create floating elements
+            for (let i = 0; i < 8; i++) {
+                const floatingEl = document.createElement('div');
+                floatingEl.className = 'floating-element';
+                floatingEl.style.width = `${Math.random() * 150 + 50}px`;
+                floatingEl.style.height = floatingEl.style.width;
+                floatingEl.style.left = `${Math.random() * 100}%`;
+                floatingEl.style.top = `${Math.random() * 100}%`;
+                document.querySelector('.container').appendChild(floatingEl);
+                
+                // Animate floating
+                animateFloating3D(floatingEl);
+            }
+            
+            // Create circuit lines
+            for (let i = 0; i < 5; i++) {
+                const circuitLine = document.createElement('div');
+                circuitLine.className = 'circuit-line';
+                circuitLine.style.width = `${Math.random() * 300 + 100}px`;
+                circuitLine.style.top = `${Math.random() * 100}%`;
+                circuitLine.style.left = `${Math.random() * 100}%`;
+                circuitLine.style.transform = `rotate(${Math.random() * 360}deg) translateZ(${Math.random() * 100 - 50}px)`;
+                document.querySelector('.container').appendChild(circuitLine);
+                
+                // Animate circuit lines
+                animateCircuit(circuitLine);
+            }
+        }
+        
+        // Animate floating elements in 3D
+        function animateFloating3D(element) {
+            let x = parseFloat(element.style.left);
+            let y = parseFloat(element.style.top);
+            let z = Math.random() * 200 - 100;
+            let xSpeed = (Math.random() - 0.5) * 0.15;
+            let ySpeed = (Math.random() - 0.5) * 0.15;
+            let zSpeed = (Math.random() - 0.5) * 0.1;
+            
+            function float() {
+                x += xSpeed;
+                y += ySpeed;
+                z += zSpeed;
+                
+                // Bounce off edges
+                if (x <= 0 || x >= 100) xSpeed *= -1;
+                if (y <= 0 || y >= 100) ySpeed *= -1;
+                if (z <= -200 || z >= 200) zSpeed *= -1;
+                
+                element.style.left = `${x}%`;
+                element.style.top = `${y}%`;
+                element.style.transform = `translateZ(${z}px)`;
+                
+                requestAnimationFrame(float);
+            }
+            
+            float();
+        }
+        
+        // Animate circuit lines
+        function animateCircuit(element) {
+            let opacity = 0.1;
+            let direction = 1;
+            
+            function pulse() {
+                opacity += 0.01 * direction;
+                if (opacity >= 0.4 || opacity <= 0.05) direction *= -1;
+                
+                element.style.opacity = opacity;
+                element.style.transform = `${element.style.transform.split('translateZ')[0]} translateZ(${Math.random() * 100 - 50}px)`;
+                
+                setTimeout(pulse, 100);
+            }
+            
+            pulse();
+        }
+        
+        // Update slide positions for 3D carousel effect
+        function updateSlidePositions() {
+            slides.forEach((slide, index) => {
+                // Remove all position classes
+                slide.classList.remove('active', 'prev', 'next', 'far-left', 'far-right');
+                
+                // Calculate the difference between current slide and this slide
+                const diff = index - currentSlide;
+                
+                // Apply appropriate class based on position
+                if (diff === 0) {
+                    slide.classList.add('active');
+                } else if (diff === -1) {
+                    slide.classList.add('prev');
+                } else if (diff === 1) {
+                    slide.classList.add('next');
+                } else if (diff < -1) {
+                    slide.classList.add('far-left');
+                } else if (diff > 1) {
+                    slide.classList.add('far-right');
+                }
+            });
+            
+            // Update slide counter
+            slideCounter.textContent = `Slide ${currentSlide + 1} of ${totalSlides}`;
+        }
+        
+        // Change slide with 3D animation
+        function goToSlide(n) {
+            if (isAnimating) return;
+            
+            // Ensure slide index is within bounds
+            if (n < 0) n = 0;
+            if (n >= totalSlides) n = totalSlides - 1;
+            
+            // Set animation flag
+            isAnimating = true;
+            
+            // Update current slide
+            currentSlide = n;
+            
+            // Update slide positions
+            updateSlidePositions();
+            
+            // Update dots
+            dots.forEach((dot, index) => {
+                if (index === currentSlide) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+            
+            // Update progress bar
+            progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+            
+            // Update URL hash
+            window.location.hash = `slide${currentSlide + 1}`;
+            
+            // Reset animation flag after delay
+            setTimeout(() => {
+                isAnimating = false;
+            }, 800);
+        }
+        
+        // Next slide
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                goToSlide(currentSlide + 1);
+            } else {
+                // Loop to first slide
+                goToSlide(0);
+            }
+        }
+        
+        // Previous slide
+        function prevSlide() {
+            if (currentSlide > 0) {
+                goToSlide(currentSlide - 1);
+            } else {
+                // Loop to last slide
+                goToSlide(totalSlides - 1);
+            }
+        }
+        
+        // Initialize presentation
+        function initPresentation() {
+            // Initialize 3D effects
+            init3DEffects();
+            
+            // Initial slide positioning
+            updateSlidePositions();
+            
+            // Set up event listeners
+            document.getElementById('nextBtn').addEventListener('click', nextSlide);
+            document.getElementById('prevBtn').addEventListener('click', prevSlide);
+            
+            // Set up dot navigation
+            dots.forEach(dot => {
+                dot.addEventListener('click', function() {
+                    const slideIndex = parseInt(this.getAttribute('data-slide'));
+                    goToSlide(slideIndex);
+                });
+            });
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+                    e.preventDefault();
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                    e.preventDefault();
+                    prevSlide();
+                } else if (e.key >= '1' && e.key <= '8') {
+                    e.preventDefault();
+                    goToSlide(parseInt(e.key) - 1);
+                }
+            });
+            
+            // Swipe support for touch devices
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            
+            document.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            });
+            
+            document.addEventListener('touchend', function(e) {
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                handleSwipe();
+            });
+            
+            function handleSwipe() {
+                const swipeThreshold = 50;
+                const xDiff = touchStartX - touchEndX;
+                const yDiff = touchStartY - touchEndY;
+                
+                // Only consider horizontal swipes with minimal vertical movement
+                if (Math.abs(xDiff) > Math.abs(yDiff) && Math.abs(xDiff) > swipeThreshold) {
+                    if (xDiff > 0) {
+                        // Swipe left - next slide
+                        nextSlide();
+                    } else {
+                        // Swipe right - previous slide
+                        prevSlide();
+                    }
+                }
+            }
+            
+            // Check for hash in URL
+            if (window.location.hash) {
+                const hash = window.location.hash;
+                const slideNum = parseInt(hash.replace('#slide', ''));
+                if (!isNaN(slideNum) && slideNum >= 1 && slideNum <= totalSlides) {
+                    goToSlide(slideNum - 1);
+                }
+            }
+            
+            // Initialize progress bar
+            progressBar.style.width = `${((currentSlide + 1) / totalSlides) * 100}%`;
+            
+            // Add subtle rotation to slides container for depth effect
+            let mouseX = 0;
+            let mouseY = 0;
+            
+            document.addEventListener('mousemove', function(e) {
+                mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+                mouseY = (e.clientY / window.innerHeight) * 2 - 1;
+                
+                // Apply subtle rotation based on mouse position
+                slidesContainer.style.transform = `rotateY(${mouseX * 2}deg) rotateX(${-mouseY * 2}deg)`;
+            });
+        }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initPresentation);
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            updateSlidePositions();
+        });
+    </script>
+</body>
+</html>
